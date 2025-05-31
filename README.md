@@ -68,18 +68,59 @@ Wire up as shown in the [wire scheme](https://www.instructables.com/Wiring-up-a-
    An MQ135 air quality sensor is one type of MQ gas sensor used to detect, measure, and monitor a wide range of gases present in air like ammonia, alcohol, benzene, smoke, carbon dioxide, etc. It operates at a 5V supply with 150mA consumption. Preheating of 20 seconds is required before the operation, to obtain the accurate output.
 
 ![MQ135 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
-   - VCC pin -> RPi pin 04 5V       (red)
-   - GND pin -> RPi pin 06 GND      (black)
+   - VCC pin -> RPi pin 04 5V       (red)    Seperate from RPi
+   - GND pin -> RPi pin 06 GND      (black)  Seperate from RPi
    - Do  pin -> unconnected
    - Ao  pin -> MCP3008 CH0-pin 01  (green)
+
+![MQ7 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
+   - VCC pin -> RPi pin 04 5V       (red)    Seperate from RPi
+   - GND pin -> RPi pin 06 GND      (black)  Seperate from RPi
+   - Do  pin -> unconnected
+   - Ao  pin -> MCP3008 CH1-pin 02  (green)
 
 Now that we wired up lets convert analog inputs to digital outputs!
    1. Boot and Log into your Raspberry PI
    2. Complete the wiring
    3. Open Terminal > sudo raspi-config > 2-Interfaces > Set SPI to ON
-   4. Clone the Repository > cd MQ135-airquality
+   4. Clone the Repository > cd mq-sensors
    5. Create .venv environment and activate
    6. pip install spidev
       - to test that the RPi is configured for spi
-      - Open Terminal > 
-   7. python3 MQ135.py
+      - Open Terminal > ls /dev/ > spidev0.0 and spidev0.1 is listed
+   7. python3 mq-sensors.py
+
+
+**POWER CONSUMPTION AND BATTERY LIFE**
+1. Raspberry Pi Zero W:
+Estimated the Pi Zero W's power usage at approximately 0.35 to 0.4 Watts due to the 5-second sleep cycle and 500kHz SPI. This is a good average for a low-activity, intermittent workload on a Zero W.
+
+2. Sensor 1:   MQ7   carbonmonoxide sensor
+Power consumption: 350 mW (0.35 Watts) / 150mA
+Operating on 5V
+
+3. Sensor 2:   MQ135 VOC air quality sensor
+Power consumption: ≤950 mW (≤0.95 Watts)
+Operating on 5V 
+
+   We'll use the maximum value for the worst-case scenario.
+
+Since the sensors are drawing power continuously, we simply add their power consumption to the average power consumption of the Raspberry Pi Zero W.
+
+4. Resulting Estimated Power Consumption
+Raspberry Pi Zero W (average) = 0.4 W
+Sensor 1 = 0.35 W    MQ135 VOC air quality sensor
+Sensor 2 = 0.95 W    MQ7   carbonmonoxide sensor 
+Total Power = Pi Zero W + Sensor 1 + Sensor 2
+Total Power = 0.4 W + 0.35 W + 0.95 W
+Total Power = 1.7 Watts
+
+Therefore, your system, with the Raspberry Pi Zero W operating in its power-efficient mode and the two continuous sensors, will draw approximately 1.7 Watts of power.
+
+Important Considerations for Battery Life:
+
+Battery Capacity: To estimate battery life, you'll need the capacity of your battery in Watt-hours (Wh) or Milliampere-hours (mAh) and its voltage. If it's mAh, convert it to Wh by: Wh = (mAh * V) / 1000.
+
+Voltage Conversion Efficiency: If your battery voltage is different from 5V (e.g., a 3.7V LiPo battery), you'll need a DC-DC converter. These converters are not 100% efficient (typically 85-95%). You'll need to account for this loss when calculating actual battery life. For example, if your battery provides 3.7V and you use a 90% efficient converter to get 5V, the actual power drawn from the battery will be slightly higher: 1.7 W / 0.90 = ~1.89 Watts.
+
+Peak Currents: While your average power is low, keep in mind that the Pi Zero W might have brief current spikes during boot or when Wi-Fi/Bluetooth is very active. Ensure your power supply (battery and converter) can handle these peak demands.
