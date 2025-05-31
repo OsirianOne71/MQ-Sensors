@@ -1,0 +1,47 @@
+To determine the optimal SPI frequency for your MCP3008 and Raspberry Pi Zero setup, we need to consider a few factors:
+
+MCP3008 Conversion Time and SPI Clock Cycles:
+
+The MCP3008 is a 10-bit ADC.
+According to the datasheet, a single conversion typically requires 18 to 24 clock cycles. Some sources cite 18, others 24, with 24 bits often being transferred due to padding for byte-aligned transfers in typical SPI implementations. Let's use 24 bits per sample for a conservative estimate.
+The maximum sampling rate for the MCP3008 is 200 kSamples/s (at VDD = 5V) or 75 kSamples/s (at VDD = 2.7V). This translates to a maximum SPI clock frequency of 3.6 MHz (for 5V) or 1.35 MHz (for 2.7V) if each sample takes 18 clock cycles. If it takes 24 cycles, then 200 ksps would require 4.8 MHz. To be safe, let's target within the datasheet's maximum clock frequency.
+Raspberry Pi Zero SPI Capabilities:
+
+The Raspberry Pi's hardware SPI can operate at relatively high speeds, with some sources indicating up to 125 MHz, though signal integrity can be an issue above 50 MHz.
+In practice, when using Python libraries (like spidev or gpiozero), the achievable speeds might be lower due to software overhead. Values like 10-32 MHz are commonly cited as practical maximums, and sometimes even lower (e.g., 5MHz for displays) in real-world scenarios.
+The important thing is that the Raspberry Pi Zero is generally capable of much higher SPI frequencies than the MCP3008 requires.
+Your Measurement Requirements:
+
+You need to take measurements from 8 channels every 5 seconds.
+This means you have 5 seconds to read all 8 channels.
+Calculation:
+
+Let's calculate the minimum required sampling rate:
+
+8 channels / 5 seconds = 1.6 samples per second (total).
+This is an extremely low sampling rate.
+Now, let's determine the minimum SPI frequency needed for this:
+
+Each sample requires about 24 bits to transfer (10-bit data + command/overhead).
+For 1.6 samples/second total:
+1.6 samples/second * 24 bits/sample = 38.4 bits per second.
+This is a minuscule bit rate. Even the slowest possible reliable SPI clock speed (e.g., 10 kHz or much lower) would be more than sufficient to transfer this small amount of data.
+
+To Preserve CPU and Resources:
+
+Since your data rate is so low, you want to choose an SPI frequency that is low enough to be stable and reliable, but not excessively high, as higher frequencies can introduce more electrical noise or require more precise wiring, though the impact on CPU usage for such a slow rate is negligible.
+
+A very common and safe SPI frequency for the MCP3008 on a Raspberry Pi is 1.35 MHz (1,350,000 Hz), especially if your VDD is 3.3V (which is common for Raspberry Pi setups). This is well within the MCP3008's capabilities and is easily handled by the Raspberry Pi Zero.
+
+Why not higher?
+
+While the Raspberry Pi Zero can handle much higher SPI speeds, the MCP3008 has its own limits. Going too high above its recommended maximum (e.g., above 3.6 MHz for 5V VDD, or 1.35 MHz for 2.7V VDD) could lead to unreliable readings or errors. For your application, there is no benefit in using a higher frequency than what the ADC comfortably supports, as you have ample time between readings.
+
+Conclusion:
+
+For your specific use case of reading 8 channels every 5 seconds, an SPI frequency of 1.35 MHz (1,350,000 Hz) is a good, conservative, and perfectly adequate choice. It will preserve CPU and resources by not running the SPI bus unnecessarily fast, while still easily meeting your data acquisition requirements.
+
+You could even go lower, like 500 kHz (500,000 Hz) or even 100 kHz (100,000 Hz), and still have plenty of speed for your needs. The exact choice within this range won't significantly impact CPU usage for such an infrequent reading schedule. It's often best to start with a widely recommended stable speed and only adjust if you encounter issues or have stricter real-time requirements (which you don't in this case).
+
+
+Sources
