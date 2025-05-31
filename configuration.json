@@ -1,0 +1,8 @@
+{
+  "connection_type": "Local",
+  "local_path": "",
+  "ssh_host": "",
+  "ssh_user": "",
+  "ssh_path": "",
+  "sshfs_mount": ""
+}
