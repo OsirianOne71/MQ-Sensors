@@ -12,8 +12,7 @@ import time
 spi = spidev.SpiDev()
 spi.open(0,0)
 
-# Set SPI speed and mode
-#See spi_freq.txt for more info
+# Set SPI speed and mode | See spi_freq.txt for more info
 spi.max_speed_hz = 500000 #500 kHz
 spi.mode = 0b00  # Mode 0: CPOL=0, CPHA=0
 
