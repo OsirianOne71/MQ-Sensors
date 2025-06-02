@@ -1,0 +1,8 @@
+{
+    "vcpkg.target.defaultTriplet": "x64-windows",
+    "vcpkg.target.hostTriplet": "x64-windows",
+    "vcpkg.target.useStaticLib": false,
+    "cmake.configureArgs": [
+        "-DVCPKG_TARGET_TRIPLET=x64-windows"
+    ]
+}
