@@ -11,14 +11,15 @@ from email.mime.text import MIMEText
 # Import the time module for log entries and sleep functionality
 
 # Establish SPI device on Bus 0,Device 0
-spi = spidev.SpiDev()
-spi.open(0,0)
+spi = spidev.SpiDev() # Create an instance of SpiDev on the Raspberry Pi
+spi.open(0,0) # Open SPI bus 0, device 0 (MCP3008)
 
 # Set SPI speed and mode | See spi_freq.txt for more info
 spi.max_speed_hz = 500000 #500 kHz
-spi.mode = 0b00  # Mode 0: CPOL=0, CPHA=0
+spi.mode = 0b00  # Mode 0: CPOL=0, CPHA=0 | Clock polarity and phase
 
-# Function to log sensor data to a file
+
+# Function to log sensor data to a file with exception handling
 def log_to_file(channel, sensor_name, adcOut, ppm):
     try:
         with open("sensor_log.csv", "a") as f:
@@ -33,17 +34,19 @@ def log_to_file(channel, sensor_name, adcOut, ppm):
 # Function to send error email notifications
 def send_error_email(error_message):
     # Configure these settings for your email provider
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    smtp_user = "cholli.pers@gmail.com"
-    smtp_password = "Isis1971!#"
-    to_email = "cholli.pers@gmail.com"
+    smtp_server = "smtp.provider.com" # Replace with your SMTP server
+                                      # Example: smtp.gmail.com for Gmail
+    smtp_port = 587 # Use 465 for SSL
+    smtp_user = "youremail.com"  # Replace with your email address
+    smtp_password = "password"   # Use an app password if 2FA is enabled
+    to_email = "youremail.com"   # Replace with the recipient's email address
 
+# Create the email message
     msg = MIMEText(f"Sensor logging error:\n\n{error_message}")
     msg["Subject"] = "Raspberry Pi Sensor Logging Error"
     msg["From"] = smtp_user
     msg["To"] = to_email
-
+# Send the email using SMTP (catch exceptions to handle errors)
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
@@ -70,7 +73,7 @@ def getAdc(channel, sensor_name):
     # Sensor's characteristics, fine tuned by adjusting potentiometer on sensor board or by changing conversion factor
 
     # Print the channel, sensor name, ADC output, and PPM value
-    #uncomment the next line to enable printing to console
+    #comment the next line to disable printing to console
     print(f"Channel: {channel} | Sensor: {sensor_name} | ADC Output: {adcOut:4d} | PPM: {ppm:4d}")
     
     # Log the data to a file
@@ -78,8 +81,10 @@ def getAdc(channel, sensor_name):
 
 while True:
     start_time = time.time()
+    # list of Channels and Sensor names
     getAdc(0, "MQ135_VOC")
-    getAdc(1, "MQ7_CarbonMonoxide")
+    getAdc(1, "MQ7_CarbonMonoxide") # Remove this line if you don't have an MQ7 sensor, or modify it for your sensor, adjust the live_plot.py script accordingly as well to match the sensors you have connected.
+
     #Measurement delay to save resources and avoid logging too frequently
     elapsed = time.time() - start_time
     sleep_time = max(0, 5 - elapsed)

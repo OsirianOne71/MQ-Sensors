@@ -9,7 +9,7 @@ class SettingsWindow(tk.Toplevel):
     def __init__(self, master):
         super().__init__(master)
         self.title("System Settings")
-        self.geometry("400x350")
+        self.geometry("400x320")  # Set a fixed size for the window
         self.resizable(False, False)
 
         self.conn_type = tk.StringVar(value="Local")
@@ -51,10 +51,11 @@ class SettingsWindow(tk.Toplevel):
         # Config file link
         ttk.Button(self, text="Open configuration.json", command=self.open_config).pack(anchor="w", padx=20, pady=10)
 
-        # Save button
-        ttk.Button(self, text="Save Settings", command=self.save_settings).pack(anchor="center", pady=10)
-
         self.update_fields()
+
+        # Save button (move to bottom)
+        ttk.Button(self, text="Save Settings", command=self.save_settings).pack(side="bottom", pady=10)
+
 
     def load_settings(self):
         if os.path.exists(CONFIG_FILE):
@@ -66,6 +67,25 @@ class SettingsWindow(tk.Toplevel):
             self.ssh_user.set(config.get("ssh_user", ""))
             self.ssh_path.set(config.get("ssh_path", ""))
             self.sshfs_mount.set(config.get("sshfs_mount", ""))
+        else:
+            # Create a default config file if it does not exist
+            config = {
+                "connection_type": "Local",
+                "local_path": "",
+                "ssh_host": "",
+                "ssh_user": "",
+                "ssh_path": "",
+                "sshfs_mount": ""
+            }
+            with open(CONFIG_FILE, "w") as f:
+                json.dump(config, f, indent=2)
+            # Set defaults in the GUI
+            self.conn_type.set("Local")
+            self.local_path.set("")
+            self.ssh_host.set("")
+            self.ssh_user.set("")
+            self.ssh_path.set("")
+            self.sshfs_mount.set("")
 
     def update_fields(self):
         self.local_frame.pack_forget()
@@ -102,22 +122,10 @@ class SettingsWindow(tk.Toplevel):
             json.dump(config, f, indent=2)
         messagebox.showinfo("Saved", "Settings saved to configuration.json")
         self.destroy()
-
-class MainApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Air Quality Monitor")
-        self.geometry("200x100")
-        self.resizable(False, False)
-
-        # System settings (gear) icon
-        settings_icon = tk.PhotoImage(width=24, height=24)  # Placeholder, replace with actual icon if desired
-        btn = ttk.Button(self, text="⚙️ System Settings", command=self.open_settings)
-        btn.pack(pady=30)
-
-    def open_settings(self):
-        SettingsWindow(self)
+        self.master.destroy()  # <-- Add this line to close the hidden root window
 
 if __name__ == "__main__":
-    app = MainApp()
-    app.mainloop()
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    SettingsWindow(root)
+    root.mainloop()
