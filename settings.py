@@ -107,7 +107,7 @@ class SettingsWindow(tk.Toplevel):
         if os.path.exists(CONFIG_FILE):
             os.startfile(CONFIG_FILE)
         else:
-            messagebox.showerror("Error", f"{CONFIG_FILE} not found.")
+            messagebox.showerror("Error", f"{CONFIG_FILE} not found.", parent=self)
 
     def save_settings(self):
         config = {
@@ -120,7 +120,7 @@ class SettingsWindow(tk.Toplevel):
         }
         with open(CONFIG_FILE, "w") as f:
             json.dump(config, f, indent=2)
-        messagebox.showinfo("Saved", "Settings saved to configuration.json")
+        messagebox.showinfo("Saved", "Settings saved to configuration.json", parent=self)
         self.destroy()
         self.master.destroy()  # <-- Add this line to close the hidden root window
 

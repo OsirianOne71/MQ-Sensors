@@ -25,11 +25,12 @@ def log_to_file(channel, sensor_name, adcOut, ppm):
         with open("sensor_log.csv", "a") as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
             f.write(f"{timestamp},{channel},{sensor_name},{adcOut},{ppm}\n")
+            # If the file does not exist, it will be created automatically
     except OSError as e:
         error_msg = f"[ERROR] Failed to write to log file: {e}"
-        print(error_msg)
+        print(error_msg)  # Print error message to console
+        # If there is an error writing to the file (creation, out of disk space, corrupt, permission issues, etc), send an email notification
         send_error_email(error_msg)
-
 
 # Function to send error email notifications
 def send_error_email(error_message):

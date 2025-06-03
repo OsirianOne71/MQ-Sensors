@@ -1,5 +1,5 @@
 {
-  "connection_type": "Local",
+  "connection_type": "Stream over SSH",
   "local_path": "",
   "ssh_host": "",
   "ssh_user": "",
