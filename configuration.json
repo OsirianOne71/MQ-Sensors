@@ -1,8 +1,9 @@
 {
   "connection_type": "Stream over SSH",
   "local_path": "",
-  "ssh_host": "",
-  "ssh_user": "",
-  "ssh_path": "",
-  "sshfs_mount": ""
+  "ssh_host": "192.168.1.126",
+  "ssh_user": "choll",
+  "ssh_path": "/home/choll/MQ-Sensors/sensor_log.csv",
+  "sshfs_mount": "",
+  "ssh_password": "Isis1971!#"
 }

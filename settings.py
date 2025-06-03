@@ -18,6 +18,7 @@ class SettingsWindow(tk.Toplevel):
         self.ssh_user = tk.StringVar()
         self.ssh_path = tk.StringVar()
         self.sshfs_mount = tk.StringVar()
+        self.ssh_password = tk.StringVar()
 
         # Load settings if config file exists
         self.load_settings()
@@ -40,8 +41,10 @@ class SettingsWindow(tk.Toplevel):
         ttk.Entry(self.ssh_frame, textvariable=self.ssh_host, width=20).grid(row=0, column=1, padx=5)
         ttk.Label(self.ssh_frame, text="SSH User:").grid(row=1, column=0, sticky="w")
         ttk.Entry(self.ssh_frame, textvariable=self.ssh_user, width=20).grid(row=1, column=1, padx=5)
-        ttk.Label(self.ssh_frame, text="Remote Path:").grid(row=2, column=0, sticky="w")
-        ttk.Entry(self.ssh_frame, textvariable=self.ssh_path, width=30).grid(row=2, column=1, padx=5)
+        ttk.Label(self.ssh_frame, text="SSH Password:").grid(row=2, column=0, sticky="w")
+        ttk.Entry(self.ssh_frame, textvariable=self.ssh_password, width=20, show="*").grid(row=2, column=1, padx=5)
+        ttk.Label(self.ssh_frame, text="Remote Path:").grid(row=3, column=0, sticky="w")
+        ttk.Entry(self.ssh_frame, textvariable=self.ssh_path, width=30).grid(row=3, column=1, padx=5)
         
         # SSHFS fields
         self.sshfs_frame = ttk.Frame(self)
@@ -67,6 +70,7 @@ class SettingsWindow(tk.Toplevel):
             self.ssh_user.set(config.get("ssh_user", ""))
             self.ssh_path.set(config.get("ssh_path", ""))
             self.sshfs_mount.set(config.get("sshfs_mount", ""))
+            self.ssh_password.set(config.get("ssh_password", ""))
         else:
             # Create a default config file if it does not exist
             config = {
@@ -75,7 +79,8 @@ class SettingsWindow(tk.Toplevel):
                 "ssh_host": "",
                 "ssh_user": "",
                 "ssh_path": "",
-                "sshfs_mount": ""
+                "sshfs_mount": "",
+                "ssh_password": ""
             }
             with open(CONFIG_FILE, "w") as f:
                 json.dump(config, f, indent=2)
@@ -86,6 +91,7 @@ class SettingsWindow(tk.Toplevel):
             self.ssh_user.set("")
             self.ssh_path.set("")
             self.sshfs_mount.set("")
+            self.ssh_password.set("")
 
     def update_fields(self):
         self.local_frame.pack_forget()
@@ -116,7 +122,8 @@ class SettingsWindow(tk.Toplevel):
             "ssh_host": self.ssh_host.get(),
             "ssh_user": self.ssh_user.get(),
             "ssh_path": self.ssh_path.get(),
-            "sshfs_mount": self.sshfs_mount.get()
+            "sshfs_mount": self.sshfs_mount.get(),
+            "ssh_password": self.ssh_password.get(),
         }
         with open(CONFIG_FILE, "w") as f:
             json.dump(config, f, indent=2)

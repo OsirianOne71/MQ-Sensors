@@ -6,6 +6,7 @@ import time
 import paramiko
 import os
 import json
+import numpy as np  # Import numpy
 
 SENSOR_NAMES = ["MQ135_VOC", "MQ7_CarbonMonoxide"]
 CONFIG_FILE = "configuration.json"
@@ -53,9 +54,14 @@ plt.style.use('dark_background')
 
 def plot_live():
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+    axes = np.array(axes).flatten()
+    plt.show(block=False)
     fig.patch.set_facecolor('black')
 
     while True:
+        if not plt.fignum_exists(fig.number):
+            break
+
         if connection_type == "stream over ssh":
             ssh_host = config.get("ssh_host")
             ssh_user = config.get("ssh_user")
@@ -81,6 +87,7 @@ def plot_live():
             window_start = now - timedelta(minutes=WINDOW_MINUTES)
 
             for i, sensor_name in enumerate(SENSOR_NAMES):
+                df_sensor = df[(df['sensor_name'] == sensor_name) & (df['timestamp'] >= window_start)]
                 ax = axes[i]
                 ax.clear()
                 ax.set_facecolor('black')
@@ -94,18 +101,19 @@ def plot_live():
                     ax.yaxis.set_tick_params(labelleft=True, colors='white')
                 ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
 
-                df_sensor = df[(df['sensor_name'] == sensor_name) & (df['timestamp'] >= window_start)]
-                ax.plot(df_sensor['timestamp'], df_sensor['adcOut'], label='adcOut', color='cyan')
-                ax.plot(df_sensor['timestamp'], df_sensor['ppm'], label='ppm', color='magenta')
+                # Only plot if there is data
+                if not df_sensor.empty:
+                    ax.plot(df_sensor['timestamp'], df_sensor['adcOut'], label='adcOut', color='cyan', marker='o')
+                    ax.plot(df_sensor['timestamp'], df_sensor['ppm'], label='ppm', color='magenta', marker='x')
                 ax.legend(facecolor='black', edgecolor='white', labelcolor='white')
                 ax.set_xlim([window_start, now])
-                ax.set_ylim(0, 1000)  # Set y-axis (vertical) limits to 0-1000
+                ax.set_ylim(0, 1000)
 
-        plt.pause(5)
-        # time.sleep(5)  # Optional: sleep to reduce CPU usage, and data collection frequency is also 5 seconds
+        plt.pause(0.5)
+
+    plt.close(fig)
 
 if __name__ == "__main__":
     plot_live()
-
 # This script will continuously read from the sensor_log.csv file and plot the adcOut and ppm values in real-time.
 # Make sure to run the sensor logging script in parallel to generate the log file.

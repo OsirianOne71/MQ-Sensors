@@ -23,9 +23,9 @@ spi.mode = 0b00  # Mode 0: CPOL=0, CPHA=0 | Clock polarity and phase
 def log_to_file(channel, sensor_name, adcOut, ppm):
     try:
         with open("sensor_log.csv", "a") as f:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            # Log as year-month-day hour:minute:second (no microseconds)
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"{timestamp},{channel},{sensor_name},{adcOut},{ppm}\n")
-            # If the file does not exist, it will be created automatically
     except OSError as e:
         error_msg = f"[ERROR] Failed to write to log file: {e}"
         print(error_msg)  # Print error message to console
@@ -37,7 +37,7 @@ def send_error_email(error_message):
     # Configure these settings for your email provider
     smtp_server = "smtp.provider.com" # Replace with your SMTP server
                                       # Example: smtp.gmail.com for Gmail
-    smtp_port = 587 # Use 465 for SSL
+    smtp_port = "587" # Use 465 for SSL
     smtp_user = "youremail.com"  # Replace with your email address
     smtp_password = "password"   # Use an app password if 2FA is enabled
     to_email = "youremail.com"   # Replace with the recipient's email address
