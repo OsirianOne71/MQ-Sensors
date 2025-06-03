@@ -115,7 +115,7 @@ MQ7 and MQ135 share the same pinouts - The links for one are reused for both.
 
 ### **INSTALL ON THE RASPBERRY PI**
 
-If you do **RAN INTO AN ISSUE**, PLEASE retrace your steps and double-check your setups.
+If you do **RUN INTO AN ISSUE**, PLEASE retrace your steps and double-check your setups.
 You may need to run the script from a virtual environment on your machine.  This installation has **NOT been set up (to install as a normal Python program with an icon and set up the environments automatically)."  This is designed for lab deployment and data collection.
 
 Here are step-by-step instructions to **clone and install** the project into the default location */home/**Rpi username*/MQ-Sensors/* on your Raspberry Pi:
