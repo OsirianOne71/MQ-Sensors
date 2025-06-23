@@ -8,7 +8,7 @@ import os
 import json
 import numpy as np  # Import numpy
 
-SENSOR_NAMES = ["MQ135_VOC", "MQ7_CarbonMonoxide"]
+SENSOR_NAMES = ["MQ135_VOC", "MQ007_CO"]
 CONFIG_FILE = "configuration.json"
 
 if os.path.exists(CONFIG_FILE):
@@ -28,14 +28,22 @@ elif connection_type == "stream over ssh":
     ssh_path = config.get("ssh_path")
     ssh_password = config.get("ssh_password", None)  # If you want to use password auth
 
+    if not all([ssh_host, ssh_user, ssh_path]):
+        raise ValueError("Missing SSH configuration: ssh_host, ssh_user, and ssh_path must all be set in configuration.json")
+
+    if ssh_path is None:
+        raise ValueError("ssh_path must not be None for SSH connection.")
+
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ssh_host, username=ssh_user, password=ssh_password)
+    ssh.connect(str(ssh_host), username=str(ssh_user), password=ssh_password)
     sftp = ssh.open_sftp()
-    LOG_FILE = sftp.open(ssh_path, 'r')  # LOG_FILE is now a file-like object
+    import io
+    LOG_FILE = sftp.open(str(ssh_path), 'r')  # LOG_FILE is now a file-like object
 
-    # Now you can use LOG_FILE with pandas:
-    df = pd.read_csv(LOG_FILE, header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
+    # Read the file content and use StringIO for pandas
+    file_content = LOG_FILE.read().decode('utf-8')
+    df = pd.read_csv(io.StringIO(file_content), header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
     LOG_FILE.close()
     sftp.close()
     ssh.close()
@@ -43,7 +51,9 @@ elif connection_type == "stream over ssh":
 elif connection_type == "sshfs":
     sshfs_mount = config.get("sshfs_mount")
     local_path = config.get("local_path") or "sensor_log.csv"
-    LOG_FILE = os.path.join(sshfs_mount, os.path.basename(local_path))
+    if not sshfs_mount:
+        raise ValueError("sshfs_mount must be set in configuration.json for sshfs connection.")
+    LOG_FILE = os.path.join(str(sshfs_mount), str(os.path.basename(local_path)))
 
 else:
     LOG_FILE = "sensor_log.csv"
@@ -63,20 +73,24 @@ def plot_live():
             break
 
         if connection_type == "stream over ssh":
-            ssh_host = config.get("ssh_host")
-            ssh_user = config.get("ssh_user")
-            ssh_path = config.get("ssh_path")
+            ssh_host = str(config.get("ssh_host") or "")
+            ssh_user = str(config.get("ssh_user") or "")
+            ssh_path = str(config.get("ssh_path") or "")
             ssh_password = config.get("ssh_password", None)
+            if not all([ssh_host, ssh_user, ssh_path]):
+                raise ValueError("Missing SSH configuration: ssh_host, ssh_user, and ssh_path must all be set in configuration.json")
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(ssh_host, username=ssh_user, password=ssh_password)
             sftp = ssh.open_sftp()
+            import io
             with sftp.open(ssh_path, 'r') as LOG_FILE:
-                df = pd.read_csv(LOG_FILE, header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
+                file_content = LOG_FILE.read().decode('utf-8')
+                df = pd.read_csv(io.StringIO(file_content), header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
             sftp.close()
             ssh.close()
         else:
-            if os.path.exists(LOG_FILE):
+            if isinstance(LOG_FILE, str) and os.path.exists(LOG_FILE):
                 df = pd.read_csv(LOG_FILE, header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
             else:
                 df = pd.DataFrame(columns=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])

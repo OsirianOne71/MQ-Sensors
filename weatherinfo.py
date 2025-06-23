@@ -30,14 +30,14 @@ bme280.sea_level_pressure = 1010  # Jacksboro, TN 37757 calibration
 CSV_FILE = "sensor_log.csv"
 if not os.path.isfile(CSV_FILE):
     with open(CSV_FILE, "w") as f:
-        f.write("channel,sensor_name,sensor_out,adj_value,adj_value_name\n")
+        f.write("timestamp,channel,sensor_name,sensor_out,adj_value,adj_value_name\n")
 
 # Function to log sensor data to a file with exception handling
 def log_to_file(channel, sensor_name, sensor_out, adj_value, adj_value_name):
     try:
         with open(CSV_FILE, "a") as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"{channel},{sensor_name},{sensor_out},{adj_value},{adj_value_name}\n")
+            f.write(f"{timestamp},{channel},{sensor_name},{sensor_out},{adj_value},{adj_value_name}\n")
     except OSError as e:
         error_msg = f"[ERROR] Failed to write to log file: {e}"
         print(error_msg)
@@ -125,6 +125,7 @@ try:
 
         #Measurement delay to save resources and avoid logging too frequently
         elapsed = time.time() - start_time
+        print(f"Loop time: {elapsed:.3f} seconds")  # Show how long the loop took
         sleep_time = max(0, 5 - elapsed)
         time.sleep(sleep_time)
 except KeyboardInterrupt:
