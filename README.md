@@ -1,5 +1,5 @@
 # MQ-Sensors
-Python code for RPI and MCP3008 to connect up to 8 sensors, log data, display, alert, and script configuration data.
+Python code for RPI and MCP3008 to connect up to 8 sensors, log data, display, alert, and script configuration data. This example will use the MQ-135 Air Quality Sensor.
 
 **Introduction**
 The **MCP3008** is an 8-channel, 10-bit analog-to-digital converter (ADC) manufactured by MCP. It is designed to convert analog signals into digital data, enabling microcontrollers to process and interpret analog inputs. The MCP3008 communicates using the SPI (Serial Peripheral Interface) protocol, which ensures fast and reliable data transfer. This component is widely used in embedded systems for interfacing with sensors, potentiometers, and other analog devices.
@@ -30,7 +30,7 @@ Microcontroller Configuration:
                       Code config = SPI mode 0 (CPOL = 0, CPHA = 0)
 
 **Wiring:**
-Between the analog-digital-converter MCP3008 and the microcontroller Raspberry Pi Zero.  Most Raspberry Pis have the same GPIO connection used in the pinout diagram linked below. Therefore, you can use any RPi for this as needed.  Simple reading for this project, the Zero with wireless is the most appropriate.
+Between the analog-digital-converter MCP3008 and the microcontroller Raspberry Pi Zero. Most Raspberry Pis have the same GPIO connection in the pinout diagram below. Therefore, you can use any RPi for this as needed.  For a simple reading for this project, the Zero with wireless is the most appropriate.
 
 [MCP3008](https://microcontrollerslab.com/wp-content/uploads/2020/03/MCP3008-Simple-Connection-Diagram.jpg) 
 Chip orientation is marked by a small semi-circular indentation on top of the physical chip to denote how the pins align with that indentation
@@ -84,7 +84,7 @@ The Raspberry Pi is set to sleep mode, which reduces CPU utilization by pausing 
 ---
 
 **SAMPLE PROJECT**
-   To test this project a Air Quality sensor that has an A0 (Analog output) that is connected to a channel 0 (Pin1) on the ADC Converter (MCP3008 above) that will change the value into a Digital number and calculate Percentage of that save value.
+   To test this project, an Air Quality sensor that has an A0 (Analog output) that is connected to channel 0 (Pin1) on the ADC Converter (MCP3008 above) that will change the value into a Digital number and calculate the Percentage of that measured value.  Therefore, the sensor resolution is the sample size of the analog voltage * (Sensor max measure ppm/sample size) = 
 
 These air quality sensors are but two MQ sensors used to detect, measure, and monitor a wide range of gases present in the air.
 
@@ -101,8 +101,8 @@ MQ7 and MQ135 share the same pinouts - The links for one are reused for both.
    - VCC pin -> RPI pin 01 3.3V  (red)
    - GND pin -> RPi pin 06 GND   (black)
    - Do  pin -> unconnected
-   - Ao  pin -> MCP3008 CH0-**pin 01**  (green)
 
+## **OPTIONAL**
 ![MQ7 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
    - VCC pin -> RPi Pin 01 3.3V  (red)  
    - GND pin -> RPi pin 06 GND   (black)
@@ -130,7 +130,7 @@ Here are step-by-step instructions to **clone and install** the project into the
    CTRL + ALT + T
  
 2. Change to your home directory (optional, for clarity):
-   ```
+   ```sh
    cd ~
    ```
 
@@ -146,7 +146,7 @@ Here are step-by-step instructions to **clone and install** the project into the
 
 5. (Optional) Create and activate a Python virtual environment:
    ```sh
-   sudo python3 -m venv .venv
+   python3 -m venv .venv
    source .venv/bin/activate
    ```
 
@@ -240,7 +240,6 @@ Now your project is set up in */home/**RPI_USERNAME**/MQ-Sensors/* and ready to 
    ```
    - **Replace** `<RPI-USERNAME>` with your Raspberry Pi Username
    - Replace `<PI_IP_ADDRESS>` with your Pi’s IP address
-   - Use your actual Pi username
 
 5. **Access the log file locally:**
    - The file will now be available at `~/pi_logs/sensor_log.csv` on your remote machine.
@@ -272,7 +271,7 @@ Suggestion: Use ONE of the two below to set up Windows SSHFS
 
 **Now that you should be able to set up the configuration using 'settings.py' that will configure "live_plot.py" to the mounted SSHFS path (e.g., `~/pi_logs/sensor_log.csv`) *or windows location that you set up similarly* and read the log file as if it were local! Continue with the instructions below for the Python file setup**
 
-1. You will need to create a folder to run scripts and store settings on your remote machine. Here is a suggestion, please alter as needed.
+1. You will need to create a folder to run scripts and store settings on your **remote machine**. Here is a suggestion, please alter as needed.
 
 **NOTE:** You can either
    1. Clone the repository again ( if space is an issue, you may delete the files you do not need)
@@ -294,10 +293,11 @@ Suggestion: Use ONE of the two below to set up Windows SSHFS
    python3 settings.py
    ```
    Choose SSHFS and input the information in the files you recorded or set up on the RPI Zero installation.
+   *path or folder field* needs to be fqdn /home/...
 
    Click 'Save Settings' and exit
 
-5. When ready to view in real-time
+6. When ready to view in real-time
 
    ```sh
    python3 live_plot.py
