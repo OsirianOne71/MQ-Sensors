@@ -39,18 +39,16 @@ Chip orientation is marked by a small semi-circular indentation on top of the ph
 
 Wire up as shown in the [wire schematic](https://www.instructables.com/Wiring-up-a-MCP3008-ADC-to-a-Raspberry-Pi-model-B-/) 
 
-    MCP3008 pin 16 VDD  -> VDD        RPi pin 02  5V  (red)    Can not exceed the VREF
-    MCP3008 pin 15 VREF -> VREF       RPi pin 04  5V  (red)    Should match sensor voltage used
+    MCP3008 pin 16 VDD  -> VDD        RPi pin 01  3.3V  (red)    
+    MCP3008 pin 15 VREF -> VREF       RPi pin 01  3.3V  (red)    Should match sensor voltage used
     MCP3008 pin 14 AGND -> GND        RPi pin 05  GND (black)
     MCP3008 pin 13 CLK  -> SPi SCLK   RPi pin 23  (orange)
     MCP3008 pin 12 DOUT -> SPI MISO   RPi pin 21  (yellow)
     MCP3008 pin 11 DIN  -> SPI MOSI   RPi pin 19  (blue)
     MCP3008 pin 10 CS   -> GPIO 23    RPi pin 24  (violet) --Conf in code as Chip Select 0(off)/1(on)
-    MCP3008 pin 09 DGND -> GND        RPi pin 25  (black)
+    MCP3008 pin 09 DGND -> GND        RPi pin 05  (black)      Any of the GND pins will work
 
-Due to the current draw of one or more sensors, the VDD and GND of the sensor will likely require separate power supplies. This will help ensure low noise and more accurate readings. Additionally, consider using a decoupling capacitor on pin 16 of the MCP3008.
-
-The system will ensure that the sensors receive a consistent supply voltage for continuous operation. They need approximately 5 minutes to warm up and should remain warm so that they can be read at any time. The Raspberry Pi is set to sleep mode, which reduces CPU utilization by pausing the script until it is time to record the next reading. This setup is effective for connecting between 1 to 8 sensors. **MCP3008**.  Please remember that any inputs not connected to a sensor need to be grounded.  That is how the MCP3008 skips that sensor reading.  This can cause programmatic issues later when reading the data into Python scripting.
+The Raspberry Pi is set to sleep mode, which reduces CPU utilization by pausing the script until it is time to record the next reading. This setup is effective for connecting between 1 to 8 sensors. **MCP3008**.
 
 **Important Considerations and Best Practices**
    + **Input Voltage Range:** Ensure the input voltage does not exceed VREF to avoid damage or incorrect (noisy) readings
@@ -93,21 +91,29 @@ These air quality sensors are but two MQ sensors used to detect, measure, and mo
 [MQ135 Air Quality Sensor](https://www.elprocus.com/mq135-air-quality-sensor/) | Detection of Volatile Organic Compound (VOC) - potentially dangerous in certain PPMs
 The MQ-135 measures ammonia, alcohol, benzene, smoke, carbon dioxide, etc. It operates at a 5V supply with 150mA consumption. Preheating for 5 minutes is required before the operation to obtain an accurate output.
 
+Reminder: Needs approximately 5 minutes to warm up and should remain warm so it can be read at any time. 
+
 MQ7 Air Quality Sensor | Detection of Carbon Monoxide (CO) - Very Dangerous at specific PPMs
 
 MQ7 and MQ135 share the same pinouts - The links for one are reused for both.
 
 ![MQ135 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
-   - VCC pin -> RPi pin 04 5V       (red)    Separate from RPi
-   - GND pin -> RPi pin 06 GND      (black)  Separate from RPi
+   - VCC pin -> RPI pin 01 3.3V  (red)
+   - GND pin -> RPi pin 06 GND   (black)
    - Do  pin -> unconnected
    - Ao  pin -> MCP3008 CH0-**pin 01**  (green)
 
 ![MQ7 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
-   - VCC pin -> RPi pin 04 5V       (red)    Separate from RPi
-   - GND pin -> RPi pin 06 GND      (black)  Separate from RPi
+   - VCC pin -> RPi Pin 01 3.3V  (red)  
+   - GND pin -> RPi pin 06 GND   (black)
    - Do  pin -> unconnected
    - Ao  pin -> MCP3008 CH1-**pin 02**  (green)
+
+![BMW/BMP280 Configuration](! ])
+   - VIN	-> RPi Pin 01 (3.3V)         (red)
+   - GND	-> RPi Pin 06 (GND)          (Black)
+   - SCL	-> PPi Pin 05 (GPIO3 / SCL1) (Grey)
+   - SDA	-> PPi Pin 03 (GPIO2 / SDA1) (purple)
 
 ### **Now that we've wired up, let us convert analog inputs to digital outputs**
 
@@ -130,7 +136,7 @@ Here are step-by-step instructions to **clone and install** the project into the
 
 3. Clone the repository:
    ```sh
-   git clone https://github.com/OsirianOne71/MQ135-AirQuality.git
+   git clone https://github.com/OsirianOne71/MQ-Sensors.git
    ```
 
 4. Move into the project directory:
