@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # python program to communicate with an MCP3008 and BME280
 # Import our SpiDev wrapper and our sleep function
 
@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 import os
 import board
 import busio
+import math
 import adafruit_bme280.advanced
 
 # Establish SPI device on Bus 0,Device 0
@@ -67,16 +68,25 @@ def send_error_email(error_message):
 
 # Function to read ADC value from a specified channel and log it to a file
 def getAdc(channel, sensor_name, channel_name):
-    #check valid channel
     if ((channel > 7) or (channel < 0)):
         return -1
-    
-    # Perform SPI transaction and store returned bits in 'r'
+
     r = spi.xfer([1, (8 + channel) << 4, 0])
     adcOut = ((r[1] & 3) << 8) + r[2]
-    # Convert ADC value to PPM (max 10-1000 PPM sensor resolution 1023 = 0.977517)
-    adj_value = round(adcOut * 0.977517, 2)
-    adj_value_name = "ppm"
+
+    # Get latest BME280 readings for correction
+    temp_c = bme280.temperature
+    humidity = bme280.humidity
+
+    if sensor_name == "MQ135_VOC":
+        # Use MQ135 correction formula for MQ135_VOC (adjust if you have MQ135-specific formula)
+        adj_value = mq135_get_corrected_ppm(adcOut, temp_c, humidity, MQ135_R0, MQ135_RL)
+        adj_value_name = "ppm"
+    else:
+        # Default: just scale ADC value
+        adj_value = round(adcOut * 0.977517, 2)
+        adj_value_name = "ppm"
+
     print(f"{channel_name} | Sensor: {sensor_name} | sensor_out: {adcOut:4d} | adj_value: {adj_value:7.2f} {adj_value_name}")
     log_to_file(channel_name, sensor_name, adcOut, adj_value, adj_value_name)
 
@@ -109,12 +119,67 @@ def check_unknown_channels():
         print(msg)
         send_error_email(msg)
 
+# Calibration constants for MQ135 (replace with your calibration values)
+MQ135_R0 = 10000  # Ohms
+MQ135_RL = 10000  # Ohms
+
+def mq135_get_corrected_ppm(adcOut, temp_c, humidity, R0, RL):
+    """
+    Calculate corrected PPM for MQ135 sensor using environmental compensation.
+    Args:
+        adcOut: Raw ADC value (0-1023)
+        temp_c: Temperature in Celsius
+        humidity: Relative humidity in %
+        R0: Sensor resistance in clean air (Ohms)
+        RL: Load resistance (Ohms)
+    Returns:
+        corrected_ppm: Corrected gas concentration in PPM
+    """
+    # Convert ADC value to sensor voltage (assuming 3.3V ADC reference)
+    Vadc = adcOut * 3.3 / 1023.0
+    if Vadc == 0:
+        return 0  # Avoid division by zero
+    Rs = RL * (3.3 - Vadc) / Vadc
+
+    # Environmental correction factor (from MQSensorsLib)
+    a = 0.00035
+    b = 0.02718
+    c = 1.39538
+    d = 0.0018
+    corr_factor = a * temp_c * temp_c - b * temp_c + c - (humidity - 33.0) * d
+
+    # Calculate ratio Rs/R0
+    ratio = Rs / R0
+
+    # MQ135 datasheet: PPM = 116.6020682 * (Rs/R0)^-2.769034857
+    try:
+        ppm = 116.6020682 * math.pow(ratio, -2.769034857)
+    except (ValueError, ZeroDivisionError):
+        ppm = 0
+
+    # Apply environmental correction
+    corrected_ppm = ppm * corr_factor
+    return round(corrected_ppm, 2)
+"""
+Calibration Note:
+-----------------
+MQ-series sensors require calibration for accurate gas concentration readings.
+- Collect temperature, humidity, and pressure (e.g., from BME280) before using MQ sensor data.
+- Apply temperature and humidity corrections to the raw ADC value using a calibration formula,
+  along with your sensors load resistance and baseline (R₀).
+- See the MQSensorsLib GitHub repository for reference calibration code:
+  https://github.com/miguel5612/MQSensorsLib
+
+Current script logs temperature, humidity, and pressure, but does NOT yet apply environmental correction
+to the MQ sensor readings. Add this logic for improved accuracy.
+"""
+
 try:
     while True:
         start_time = time.time()
         # MCP3008_0-0 Channels and Sensor names
-        getAdc(0, "MQ137_VOC", "MCP00_CH00")
-        getAdc(1, "MQ007_CO", "MCP00_CH01")
+        getAdc(0, "MQ135_VOC", "MCP00_CH00")
+        getAdc(1, "MQ7_CO", "MCP00_CH01")
         # Add more getAdc() calls for additional channels/sensors if needed
 
         # BME280 sensor readings
