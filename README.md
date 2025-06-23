@@ -1,10 +1,14 @@
-# MQ-Sensors
+# Various-Sensors
 Python code for RPI and MCP3008 to connect up to 8 sensors, log data, display, alert, and script configuration data. This example will use the MQ-135 Air Quality Sensor.
 
 **Introduction**
+For the raspberry pi to be able to read various sensors, with limited number of pins available for the task.  We have to use sensors that adressable with the same number of wires, or add a middleware component that allows you to multiplex between the available connected sensors to that component.
+
+The Raspberry Pi can utilize 2 middleware chips that use a chip select pin and will provide outputs from the connected sensors when polled by the Pi. In the example we are only using 1 chip MCP3008 chip select 0:0, but two can be used by utilizing the other chip select pin and 0:1 (and some slight program changes). Config can support a maximum of 16 sensors or other analog devices that output information on an Analog pin.
+
 The **MCP3008** is an 8-channel, 10-bit analog-to-digital converter (ADC) manufactured by MCP. It is designed to convert analog signals into digital data, enabling microcontrollers to process and interpret analog inputs. The MCP3008 communicates using the SPI (Serial Peripheral Interface) protocol, which ensures fast and reliable data transfer. This component is widely used in embedded systems for interfacing with sensors, potentiometers, and other analog devices.
 
-This installation has **NOT** been set up (to install as a normal Python program with an icon and the environments set up automatically). This has been designed for lab deployment and data collection.
+This installation has **NOT** been set up (to install as a normal Python program with an icon and the environments set up automatically). This has been designed for lab deployment and data collection.  We will set the Python script to run as a service upon start up of the RPi and will collect the data in the background after a 5 minute delayed start for some sensors to warm up.
 
    **Reference websites**
 
@@ -13,40 +17,30 @@ This installation has **NOT** been set up (to install as a normal Python program
     https://www.allelcoelec.com/blog/A-Complete-Overview-of-the-MCP3008-ADC.html
 
 **How to Use the MCP3008 in a Circuit**
-   - Power Supply: Connect the VDD pin to a 3.3V or 5V power source, and connect the AGND and DGND pins to ground. (Set to the same level as the sensor uses)  In this project, the VREF and VDD are both 5V, as the sensor requires that level
+   - Power Supply: Connect the VDD pin to a 3.3V or 5V power source, and connect the AGND and DGND pins to ground. (Set to the same voltage level as the sensor uses)  In this project, the VREF and VDD are both 3.3V, as most of the sensors requires that level.
 
-   - Reference Voltage: Connect the VREF pin to a stable reference voltage (e.g., 3.3V or 5V). This determines the ADC's input range. 5V gives a resolution of 0-1023 and increases accuracy.
+   - Reference Voltage: Connect the VREF pin to a stable reference voltage (e.g., 3.3V or 5V). This determines the ADC's input range. 3.3V give sa resolution of 0-123 675; 5V gives a resolution of 0-1023 and increased accuracy.
 
-**SPI Connections:**
-Physical:
-  Connect the CS/SHDN pin to a GPIO pin on the microcontroller for chip select
-  Connect the DIN pin to the SPI MOSI pin on the microcontroller
-  Connect the DOUT pin to the SPI MISO pin on the microcontroller
-  Connect the CLK pin to the SPI SCK pin on the microcontroller
-  Analog Inputs: Connect up to 8 analog signals to the channel 0 – channel 7 pins
+🔌 Power and Ground Connections
+MCP3008 Pin	Label	Connected To	      Wire
+         16	VDD	3.3V  (RPi Pin 01)	red
+         15	VREF	3.3V  (RPi Pin 01)	red
+         14	AGND	GND   (RPi Pin 06)	black
+         09	DGND	GND   (RPi Pin 06)   black
+🔁 SPI Connections
+MCP3008 Pin	Signal	RPi GPIO	RPi Pin  SPI   Wire
+         13	CLK	   GPIO 11	Pin 23   SCLK  orange
+         12	DOUT	   GPIO 09	Pin 21   MISO  yellow
+         11	DIN	   GPIO 10	Pin 19   MOSI  blue
+         10	CS	      GPIO 08	Pin 24   CE0   Grey
 
-Microcontroller Configuration:
+Microcontroller Software Configuration (handled in the script):
   SPI Configuration:  Configure the microcontroller's SPI interface to communicate with the MCP3008. 
                       Code config = SPI mode 0 (CPOL = 0, CPHA = 0)
 
-**Wiring:**
-Between the analog-digital-converter MCP3008 and the microcontroller Raspberry Pi Zero. Most Raspberry Pis have the same GPIO connection in the pinout diagram below. Therefore, you can use any RPi for this as needed.  For a simple reading for this project, the Zero with wireless is the most appropriate.
-
-[MCP3008](https://microcontrollerslab.com/wp-content/uploads/2020/03/MCP3008-Simple-Connection-Diagram.jpg) 
-Chip orientation is marked by a small semi-circular indentation on top of the physical chip to denote how the pins align with that indentation
-
 [Raspberry Pi](https://pinout.xyz/)
 
-Wire up as shown in the [wire schematic](https://www.instructables.com/Wiring-up-a-MCP3008-ADC-to-a-Raspberry-Pi-model-B-/) 
-
-    MCP3008 pin 16 VDD  -> VDD        RPi pin 01  3.3V  (red)    
-    MCP3008 pin 15 VREF -> VREF       RPi pin 01  3.3V  (red)    Should match sensor voltage used
-    MCP3008 pin 14 AGND -> GND        RPi pin 05  GND (black)
-    MCP3008 pin 13 CLK  -> SPi SCLK   RPi pin 23  (orange)
-    MCP3008 pin 12 DOUT -> SPI MISO   RPi pin 21  (yellow)
-    MCP3008 pin 11 DIN  -> SPI MOSI   RPi pin 19  (blue)
-    MCP3008 pin 10 CS   -> GPIO 23    RPi pin 24  (violet) --Conf in code as Chip Select 0(off)/1(on)
-    MCP3008 pin 09 DGND -> GND        RPi pin 05  (black)      Any of the GND pins will work
+# *![*WIRING DIAGRAM**](/technical/RPi2w-MCP3008-sensors_Breadboard)
 
 The Raspberry Pi is set to sleep mode, which reduces CPU utilization by pausing the script until it is time to record the next reading. This setup is effective for connecting between 1 to 8 sensors. **MCP3008**.
 
@@ -89,40 +83,29 @@ The Raspberry Pi is set to sleep mode, which reduces CPU utilization by pausing 
 These air quality sensors are but two MQ sensors used to detect, measure, and monitor a wide range of gases present in the air.
 
 [MQ135 Air Quality Sensor](https://www.elprocus.com/mq135-air-quality-sensor/) | Detection of Volatile Organic Compound (VOC) - potentially dangerous in certain PPMs
-The MQ-135 measures ammonia, alcohol, benzene, smoke, carbon dioxide, etc. It operates at a 5V supply with 150mA consumption. Preheating for 5 minutes is required before the operation to obtain an accurate output.
+The MQ-135 measures ammonia, alcohol, benzene, smoke, carbon dioxide, etc. It operates at a 3.3 - 5V supply with 150mA consumption. Preheating for 5 minutes is required before the operation to obtain an accurate output.
 
-Reminder: Needs approximately 5 minutes to warm up and should remain warm so it can be read at any time. 
-
-MQ7 Air Quality Sensor | Detection of Carbon Monoxide (CO) - Very Dangerous at specific PPMs
+MQ007 Air Quality Sensor | Detection of Carbon Monoxide (CO) - Very Dangerous at specific PPMs
 
 MQ7 and MQ135 share the same pinouts - The links for one are reused for both.
 
-![MQ135 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
-   - VCC pin -> RPI pin 01 3.3V  (red)
-   - GND pin -> RPi pin 06 GND   (black)
-   - Do  pin -> unconnected
+![MQ Sensors Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
 
-## **OPTIONAL**
-![MQ7 Pin Configuration](![https://www.elprocus.com/wp-content/uploads/MQ135-Air-Quality-Sensor-Pin-Configuration-300x152.jpg])
-   - VCC pin -> RPi Pin 01 3.3V  (red)  
-   - GND pin -> RPi pin 06 GND   (black)
-   - Do  pin -> unconnected
-   - Ao  pin -> MCP3008 CH1-**pin 02**  (green)
+🔁 I2C Connections
+BME/BMP280  Pin	Signal	RPi Pin	I2C   Wire
+            01	   VIN	   Pin 01         red
+            02	   GND	   Pin 06         black
+            03	   SCL	   Pin 05   SCL1  purple
+            04	   SDA      Pin 02   SDA1  grey
 
-![BMW/BMP280 Configuration](! ])
-   - VIN	-> RPi Pin 01 (3.3V)         (red)
-   - GND	-> RPi Pin 06 (GND)          (Black)
-   - SCL	-> PPi Pin 05 (GPIO3 / SCL1) (Grey)
-   - SDA	-> PPi Pin 03 (GPIO2 / SDA1) (purple)
-
-### **Now that we've wired up, let us convert analog inputs to digital outputs**
+### **Now that we've wired up, let us convert Various sensor inputs to digital outputs**
 
 ---
 
 ### **INSTALL ON THE RASPBERRY PI**
 
 If you do **RUN INTO AN ISSUE**, PLEASE retrace your steps and double-check your setups.
-You may need to run the script from a virtual environment on your machine.  This installation has **NOT been set up (to install as a normal Python program with an icon and set up the environments automatically)."  This is designed for lab deployment and data collection.
+You may need to run the script from a virtual environment on your machine.    This is designed for lab deployment and data collection.
 
 Here are step-by-step instructions to **clone and install** the project into the default location */home/**Rpi username*/MQ-Sensors/* on your Raspberry Pi:
 
@@ -141,7 +124,7 @@ Here are step-by-step instructions to **clone and install** the project into the
 
 4. Move into the project directory:
   ```sh
-  cd MQ135-AirQuality
+  cd sensors-pi
   ```
 
 5. (Optional) Create and activate a Python virtual environment:
@@ -155,24 +138,20 @@ Here are step-by-step instructions to **clone and install** the project into the
    sudo pip install spidev matplotlib pandas
    ```
 
-7. Enable SPI on the Raspberry Pi (if not already enabled):
+7. Enable I²C and SPI via raspi-config:
    ```sh
    sudo rapsi-config
    ```
-   - Go to *Interfacing Options* > *SPI* > *Enable*
+   # Interface Options -> Enable I2C Go to *Interfacing Options* > *I2C* > *Enable*
+   # Interface Options -> Enable SPI Go to *Interfacing Options* > *SPI* > *Enable*
+   # Interface Options -> Enable SSH Go to *Interfacing Options* > *SSH* > *Enable*
 
-      - To test that the RPi is configured for SPI, you can execute the following command later or in a new terminal window
+   - To test that the RPi is configured for SPI, you can execute the following command later or in a new terminal window
       - Open a Terminal
       ```sh
       ls /dev/
       ```
-      - Check in the output that *spidev0.0* and *spidev0.1* are listed
-
-   - If using remote access (another machine), you can enable SSH from here to save yourself a few steps.
-   ```sh
-   sudo raspi-config
-   ```
-      - Go to *Interfacing Options* > *SSH* > *Enable*
+      - Check in the output that *spidev0.0* and/or *spidev0.1* are listed
    
 8. Let the PI and sensors power on for ~5 mins for the physical sensors to warm up; they will not accurately record data before then.  Then, continue to the next step when you are ready to record data.
 
@@ -189,7 +168,50 @@ Now your project is set up in */home/**RPI_USERNAME**/MQ-Sensors/* and ready to 
    python3 live-plot.py
    ```
 
-**NOTE:** If you are running headless or want to access remotely please use the remote instrucitons and what files to load onto the remote machine.
+To recover from a power loss, Brown out etc.  Set the script to run as a systemd service when the Pi Zero 2W boots.
+
+1. Make sure your script is executable and uses the correct Python shebang
+At the top of your script (e.g., weatherinfo.py), add:
+
+`#!/usr/bin/env python3`
+
+Then make it executable:
+
+`chmod +x /home/pi/MQ-Sensors/weatherinfo.py`
+
+2. Create a systemd service file
+Create a new service file, for example:
+
+`sudo nano /etc/systemd/system/sensorlogger.service`
+
+Paste the following (edit paths as needed):
+`[Unit]
+Description=MQ Sensor Logger
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/MQ-Sensors/weatherinfo.py
+WorkingDirectory=/home/pi/MQ-Sensors
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target`
+
+3. Enable and start the service
+
+`sudo systemctl daemon-reload
+sudo systemctl enable sensorlogger.service
+sudo systemctl start sensorlogger.service`
+
+Check status and logs
+
+`sudo systemctl status sensorlogger.service
+journalctl -u sensorlogger.service -f`
+
+
 
 ---
 
