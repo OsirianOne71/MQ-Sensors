@@ -1,18 +1,18 @@
-# MQ Sensor Data Logger with Raspberry Pi and MCP3008
+# Sensor Data Logger Using Raspberry Pi Zero 2W, an MCP3008 (ADC) and Various Sensors
 
 ## Overview
 
-This project demonstrates how to connect up to 8 analog sensors to a Raspberry Pi using the MCP3008 analog-to-digital converter (ADC), with data logging, real-time visualization, and support for remote monitoring. The MQ-135 air quality sensor is used as an example. It also includes I²C integration with a BME/BMP280 sensor for temperature, humidity, and barometric pressure readings.
+This project demonstrates connecting up to 8 analog sensors to a Raspberry Pi using the MCP3008 analog-to-digital converter (ADC). It includes data logging, real-time visualization, and support for remote monitoring. The MQ-135 air quality sensor is used as an example. The project also includes I²C integration with a BME/BMP280 sensor for temperature, humidity, and barometric pressure readings.
 
 ## Introduction
 
-The Raspberry Pi lacks native analog input pins, so an ADC like the MCP3008 is required to interface with analog sensors. The MCP3008 allows up to 8 analog devices to be read using the SPI interface. With two MCP3008 chips and chip-select logic, up to 16 analog inputs are possible.
+The Raspberry Pi lacks native analog input pins, so an ADC like the MCP3008 is required for interfacing analog sensors. The MCP3008 allows up to 8 analog devices to be read using the SPI interface. With two MCP3008 chips and chip-select logic, up to 16 analog inputs are possible.
 
-This setup is designed for lab-based data collection. Instead of a GUI installation, the system is designed to run headlessly via a systemd service. It includes a delay to allow sensors (like MQ-series) to warm up.
+This setup is designed for lab-based data collection. Instead of a GUI installation, the system is designed to run headlessly via a systemd service. It includes a delay allowing sensors (like MQ-series) to warm up.
 
 ## MCP3008 Overview
 
-The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts analog voltages into digital values ranging from 0–1023. For compatibility with the Raspberry Pi's 3.3V GPIO logic, VDD and VREF are both connected to 3.3V.
+The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts analog voltages into digital values ranging from 0 – 1023. For compatibility with the Raspberry Pi's 3.3V GPIO logic, VDD and VREF are both connected to 3.3V.
 
 ### Power and Ground Connections
 
@@ -41,7 +41,7 @@ The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts 
 
 ## Sensor Use Example(s)
 
-The MQ-135 sensor outputs an analog signal on its A0 pin. This is connected to CH0 of the MCP3008. The Python script reads this value records and converts it to a digital value and then the calculated estimated gas concentration in PPM based on the formula used for sensor accuracy based on VREF used.
+The MQ-135 sensor outputs an analog signal on its A0 pin. This is connected to CH0 of the MCP3008. The Python script reads these value records and converts them to a digital value, and then calculates the estimated gas concentration in PPM based on the formula used for sensor accuracy, based on the VREF used.
 
 FORMULA FOR SENSOR ACCURACY EXPLANATION.  THE FORMULA WITH ADJUSTMENTS FROM THE TEMP AND HUMIDITY IS CALCULATED WITHIN THE CODE.
 
@@ -49,7 +49,7 @@ Other sensors (e.g., MQ-7 for CO detection) follow the same pin layout and wirin
 
 ## BME/BMP280 Sensor Integration (I²C)
 
-To complement the analog readings, a BME280 or BMP280 sensor can be connected via I²C to monitor temperature, humidity, and pressure.
+A BME280 or BMP280 sensor can be connected via I²C to monitor temperature, humidity, and pressure.
 
 ### I²C Wiring
 
@@ -60,7 +60,7 @@ To complement the analog readings, a BME280 or BMP280 sensor can be connected vi
 | SCL            | Clock  | Pin 5   | SCL1      | Purple     |
 | SDA            | Data   | Pin 3   | SDA1      | Grey       |
 
-The sensor is automatically detected via the I²C bus by the Python script and logs readings alongside the analog data.
+The sensor is automatically detected via the I²C bus using a Python script and logs reading alongside the analog data.
 
 
 ## Hardware and wiring diagrams
@@ -78,7 +78,7 @@ The sensor is automatically detected via the I²C bus by the Python script and l
 
 ## Installation Steps
 
-1. **Open terminal on your Raspberry Pi Zero 2W.**
+1. **Open terminal on your Raspberry Pi Zero 2W**
 
 2. **Clone the repository:**
 
@@ -243,7 +243,7 @@ python3 live_plot.py
 
 - Check wiring and SPI pin setup
 - Ensure SPI mode is set to 0 (CPOL=0, CPHA=0)
-- Ensure CS pin is toggled correctly in code
+- Ensure the CS pin is toggled correctly in code
 
 **Floating or Noisy Readings:**
 
@@ -265,7 +265,7 @@ python3 live_plot.py
 
 ---
 
-This guide is designed for functional lab deployments of air quality and environmental sensors with Raspberry Pi. It supports both local and remote data logging and visualization using the MCP3008 and I²C-based BME/BMP280 sensors. When calibrated in a lab environment, utilizing controlled conditions and measuring the temperature and humidity.  Then when used normally, the measured Temp and Humidity can be used to correct the measurement from any of the sensors using a calculation.
+This guide is designed for functional lab deployment of air quality and environmental sensors with a Raspberry Pi. It supports local and remote data logging and visualization using the MCP3008 and I²C-based BME/BMP280 sensors. When calibrated in a lab environment, it measures temperature, humidity, and pressure.  Then, when used normally, the measured temperature and Humidity can be used to correct the measurement from any of the sensors using a calculation.
 
 
 ## Calibration and Environmental Correction
