@@ -12,7 +12,7 @@ This setup is designed for lab-based data collection. Instead of a GUI installat
 
 ## MCP3008 Overview
 
-The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts analog voltages into digital values ranging from 0 – 1023. For compatibility with the Raspberry Pi's 3.3V GPIO logic, VDD and VREF are both connected to 3.3V.
+The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts analog voltages into digital values ranging from 0 – 1023. For compatibility with the Raspberry Pi's 3.3V GPIO logic, VDD and VREF are both connected to 3.3V. **Resolution** The MCP3008 offers a 10-bit resolution. This means it can divide the analogue input signal into 1024 steps, providing a detailed representation of the analogue signal in digital form. (Value/1024)*3.3
 
 ### Power and Ground Connections
 
