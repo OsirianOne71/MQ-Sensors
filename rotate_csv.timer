@@ -1,0 +1,10 @@
+[Unit]
+Description=Run CSV rotation script nightly
+
+[Timer]
+OnCalendar=*-*-* 23:59:00
+Persistent=true
+Unit=rotate_csv.service
+
+[Install]
+WantedBy=timers.target

@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
@@ -10,6 +12,9 @@ import numpy as np  # Import numpy
 
 SENSOR_NAMES = ["MQ135_VOC", "MQ007_CO"]
 CONFIG_FILE = "configuration.json"
+
+# Stream over SSH or SSHFS is for running the dasboard or android app on a remote machine
+# Local is for running the dashboard on the same machine as the sensor logging script
 
 if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, "r") as f:
@@ -43,7 +48,11 @@ elif connection_type == "stream over ssh":
 
     # Read the file content and use StringIO for pandas
     file_content = LOG_FILE.read().decode('utf-8')
-    df = pd.read_csv(io.StringIO(file_content), header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
+    df = pd.read_csv(
+        io.StringIO(file_content),
+        header=None,
+        names=['timestamp', 'channel', 'sensor_name', 'sensor_out', 'adj_value', 'adj_value_name']
+    )
     LOG_FILE.close()
     sftp.close()
     ssh.close()
@@ -86,14 +95,22 @@ def plot_live():
             import io
             with sftp.open(ssh_path, 'r') as LOG_FILE:
                 file_content = LOG_FILE.read().decode('utf-8')
-                df = pd.read_csv(io.StringIO(file_content), header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
+                df = pd.read_csv(
+                    io.StringIO(file_content),
+                    header=0  # Use header row from file
+                )
             sftp.close()
             ssh.close()
         else:
             if isinstance(LOG_FILE, str) and os.path.exists(LOG_FILE):
-                df = pd.read_csv(LOG_FILE, header=None, names=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
+                df = pd.read_csv(
+                    LOG_FILE,
+                    header=0  # Use header row from file
+                )
             else:
-                df = pd.DataFrame(columns=['timestamp', 'channel', 'sensor_name', 'adcOut', 'ppm'])
+                df = pd.DataFrame(
+                    columns=['timestamp', 'channel', 'sensor_name', 'sensor_out', 'adj_value', 'adj_value_name']
+                )
 
         if not df.empty:
             df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -117,8 +134,8 @@ def plot_live():
 
                 # Only plot if there is data
                 if not df_sensor.empty:
-                    ax.plot(df_sensor['timestamp'], df_sensor['adcOut'], label='adcOut', color='cyan', marker='o')
-                    ax.plot(df_sensor['timestamp'], df_sensor['ppm'], label='ppm', color='magenta', marker='x')
+                    ax.plot(df_sensor['timestamp'], df_sensor['sensor_out'], label='sensor_out', color='cyan', marker='o')
+                    ax.plot(df_sensor['timestamp'], df_sensor['adj_value'], label='adj_value', color='magenta', marker='x')
                 ax.legend(facecolor='black', edgecolor='white', labelcolor='white')
                 ax.set_xlim([window_start, now])
                 ax.set_ylim(0, 1000)
@@ -129,5 +146,6 @@ def plot_live():
 
 if __name__ == "__main__":
     plot_live()
-# This script will continuously read from the sensor_log.csv file and plot the adcOut and ppm values in real-time.
-# Make sure to run the sensor logging script in parallel to generate the log file.
+# This script will continuously read from the sensor_log.csv and or sensor_data.db file and plot outputs in real-time
+# Historical data can be viewed by running the script without the live plotting functionality
+# Make sure to run the sensor logging script and install the service in parallel to generate the log file

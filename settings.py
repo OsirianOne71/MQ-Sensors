@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+# This script provides a GUI for configuring system settings related to sensor logging
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import json

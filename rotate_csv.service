@@ -1,0 +1,9 @@
+[Unit]
+Description=Rotate and archive sensor CSV
+After=weatherinfo.service
+Requires=weatherinfo.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/choll/rotate_csv.py
+User=choll

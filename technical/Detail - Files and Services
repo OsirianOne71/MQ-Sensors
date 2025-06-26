@@ -1,0 +1,50 @@
+## *Layout of File System*
+    + sensor_log.csv -  Todays current data from 00:00:00 to now
+    + rotate.csv -   Cronjob to store all data from before today (i.e. anything earlier than 00:00:00 today)
+    - settings.py:
+        + Seperate app ran manually 
+        + Set user defined values
+        + Stored in -> configuration.json
+    - configuration.json - File to store user settings
+    - sensorlogger.service -  
+        + Systemd service to start automatically upon boot
+        + Collect sensor data from all available sensors
+        + Exception handling
+        + Log or output errors
+        + If sensor_log.csv does not exist prior to a log entry being written it will create a new file with a header and continue logging.  This is designed so that there will be no missed log entry.
+    - README.md - This file
+    - Weatherinfo.py
+
+/home/choll/
+├── archive/
+│   ├── sensor_log_2025-06-24.csv
+│   └── sensor_log_2025-06-23.csv
+├── README.md
+├── rotate_csv.py           # Rotation script - Crontab
+├── sensor_data.db          # SQLite DB
+├── sensor_log.csv          # Live file
+├── settings.py             # Settings GUI
+├── technical               # Background/Support Info
+│   ├── Example-Code_Output_Log-to-display.jpg
+│   ├── Example-Power_consumption.txt
+│   ├── Example-spi-freq.txt
+│   ├── RPi2W-MCP3008-sensors_Breahboarding.png
+│   ├── RPi2W-MCP2008-sensors_PCBDesign.png  (advanced)
+│   └── RPi2W-MCP3008_Schematic.png
+└── weatherinfo.py         # Live file - data logging service
+
+## *SYSTEMD SERVICES*
+### sensorlogger.service
+This service is responsible for starting the `weatherinfo.py` script at boot and ensuring that it runs continuously to log sensor data. It is configured to restart automatically in case of failure.
+
+# Sensor Data Logging and Rotation System
+This system is designed to log sensor data from various sources, store it in a CSV file, and rotate the data daily to ensure that the system remains efficient and manageable. The system also includes a SQLite database for long-term storage of sensor data.
+
+# *Overview of the System*
+The system consists of two main components:
+1. **weatherinfo.py**: handles live sensor data logging
+2. **rotate_csv.py**: a separate daily rotation script that runs at 00:00:00 to:
+    - Push CSV data to SQLite
+    - Rename old CSV (e.g., append date)
+    - Create a fresh CSV for the next day 
+    - Delete CSVs older than 7 days

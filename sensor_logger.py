@@ -36,6 +36,10 @@ if not os.path.isfile(CSV_FILE):
 # Function to log sensor data to a file with exception handling
 def log_to_file(channel, sensor_name, sensor_out, adj_value, adj_value_name):
     try:
+        # Check if file was removed during runtime
+        if not os.path.exists(CSV_FILE):
+            with open(CSV_FILE, "w") as f:
+                f.write("timestamp,channel,sensor_name,sensor_out,adj_value,adj_value_name\n")
         with open(CSV_FILE, "a") as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"{timestamp},{channel},{sensor_name},{sensor_out},{adj_value},{adj_value_name}\n")
