@@ -9,8 +9,16 @@ import paramiko
 import os
 import json
 import numpy as np  # Import numpy
+import requests
+import pytz
 
-SENSOR_NAMES = ["MQ135_VOC", "MQ007_CO"]
+SENSOR_NAMES = [
+    "MQ7_CO",
+    "MQ137_VOC",
+    "BME280_Temperature_F",
+    "BME280_Pressure_hPA",
+    "BME280_Humidity"
+]
 CONFIG_FILE = "configuration.json"
 
 # Stream over SSH or SSHFS is for running the dasboard or android app on a remote machine
@@ -68,81 +76,53 @@ else:
     LOG_FILE = "sensor_log.csv"
 
 WINDOW_MINUTES = 2
+screen_duration = int(config.get("screen_duration", 5))
+zip_code = config.get("zip_code", "37757")
+time_zone = config.get("time_zone", "America/New_York")
 
 plt.style.use('dark_background')
 
 def plot_live():
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
-    axes = np.array(axes).flatten()
+    fig, axes = plt.subplots(1, 1, figsize=(14, 6))
     plt.show(block=False)
     fig.patch.set_facecolor('black')
+    screen_idx = 0
+    last_switch = time.time()
 
     while True:
         if not plt.fignum_exists(fig.number):
             break
 
-        if connection_type == "stream over ssh":
-            ssh_host = str(config.get("ssh_host") or "")
-            ssh_user = str(config.get("ssh_user") or "")
-            ssh_path = str(config.get("ssh_path") or "")
-            ssh_password = config.get("ssh_password", None)
-            if not all([ssh_host, ssh_user, ssh_path]):
-                raise ValueError("Missing SSH configuration: ssh_host, ssh_user, and ssh_path must all be set in configuration.json")
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(ssh_host, username=ssh_user, password=ssh_password)
-            sftp = ssh.open_sftp()
-            import io
-            with sftp.open(ssh_path, 'r') as LOG_FILE:
-                file_content = LOG_FILE.read().decode('utf-8')
-                df = pd.read_csv(
-                    io.StringIO(file_content),
-                    header=0  # Use header row from file
-                )
-            sftp.close()
-            ssh.close()
-        else:
-            if isinstance(LOG_FILE, str) and os.path.exists(LOG_FILE):
-                df = pd.read_csv(
-                    LOG_FILE,
-                    header=0  # Use header row from file
-                )
-            else:
-                df = pd.DataFrame(
-                    columns=['timestamp', 'channel', 'sensor_name', 'sensor_out', 'adj_value', 'adj_value_name']
-                )
+        now = time.time()
+        if now - last_switch > screen_duration:
+            screen_idx = (screen_idx + 1) % 3
+            last_switch = now
 
-        if not df.empty:
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            now = datetime.now()
-            window_start = now - timedelta(minutes=WINDOW_MINUTES)
-
-            for i, sensor_name in enumerate(SENSOR_NAMES):
-                df_sensor = df[(df['sensor_name'] == sensor_name) & (df['timestamp'] >= window_start)]
-                ax = axes[i]
-                ax.clear()
-                ax.set_facecolor('black')
-                ax.set_title(sensor_name, color='white')
-                ax.set_xlabel("Time (2 Minutes)", color='white')
-                if i == 0:
-                    ax.set_ylabel("PPM", color='white')
-                ax.tick_params(axis='x', colors='white')
-                ax.tick_params(axis='y', colors='white')
-                if i == 1:
-                    ax.yaxis.set_tick_params(labelleft=True, colors='white')
-                ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
-
-                # Only plot if there is data
-                if not df_sensor.empty:
-                    ax.plot(df_sensor['timestamp'], df_sensor['sensor_out'], label='sensor_out', color='cyan', marker='o')
-                    ax.plot(df_sensor['timestamp'], df_sensor['adj_value'], label='adj_value', color='magenta', marker='x')
-                ax.legend(facecolor='black', edgecolor='white', labelcolor='white')
-                ax.set_xlim([window_start, now])
-                ax.set_ylim(0, 1000)
+        axes.clear()
+        if screen_idx == 0:
+            plot_indoor(axes)
+        elif screen_idx == 1:
+            plot_current_weather(axes, zip_code, time_zone)
+        elif screen_idx == 2:
+            plot_forecast(axes, zip_code, time_zone)
 
         plt.pause(0.5)
-
     plt.close(fig)
+
+def plot_indoor(ax):
+    # Your existing code to plot local sensor data
+    ax.set_title("Indoor Air Quality", color='white')
+    # ...plotting logic...
+
+def plot_current_weather(ax, zip_code, time_zone):
+    # Query weather API for current and next 4 hours
+    ax.set_title(f"Current Weather ({zip_code})", color='white')
+    # ...plotting logic...
+
+def plot_forecast(ax, zip_code, time_zone):
+    # Query weather API for next 4 days
+    ax.set_title(f"4-Day Forecast ({zip_code})", color='white')
+    # ...plotting logic...
 
 if __name__ == "__main__":
     plot_live()

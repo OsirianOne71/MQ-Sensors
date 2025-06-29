@@ -5,5 +5,14 @@
   "ssh_user": "choll",
   "ssh_path": "/home/choll/MQ-Sensors/sensor_log.csv",
   "sshfs_mount": "",
-  "ssh_password": "Isis1971!#"
+  "ssh_password": "Isis1971!#",
+  "screen_duration": 8,
+  "zip_code": "37757",
+  "time_zone": "America/New_York",
+  "city_state": "Jacksboro, TN",
+  "latitude": "36.3266",
+  "longitude": "-84.1928",
+  "tzdb_username": "osirianone",
+  "tzdb_apikey": "LV6KGE90II1O",
+  "units": "F"
 }

@@ -15,22 +15,23 @@ This setup is designed for lab-based data collection. Instead of a GUI installat
 The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts analog voltages into digital values ranging from 0 – 1023. For compatibility with the Raspberry Pi's 3.3V GPIO logic, VDD and VREF are both connected to 3.3V. **Resolution** The MCP3008 offers a 10-bit resolution. This means it can divide the analogue input signal into 1024 steps, providing a detailed representation of the analogue signal in digital form. (Value/1024)*3.3
 
 ### Power and Ground Connections
+Power is connected to incoming power from Buck Converter with low ripple, as possible.
 
 | MCP3008 Pin | Label | Connected To | RPi Pin | Wire Color |
 | ----------- | ----- | ------------ | ------- | ---------- |
-| 16          | VDD   | 3.3V         | Pin 1   | Red        |
-| 15          | VREF  | 3.3V         | Pin 1   | Red        |
-| 14          | AGND  | Ground       | Pin 6   | Black      |
-| 9           | DGND  | Ground       | Pin 6   | Black      |
+| 16          | VDD   | 5.0V         | Pin 1   | Red        |  .1uF Capacitor from Pin 16 to Common Ground
+| 15          | VREF  | 5.0V         | Pin 1   | Red        |
+| 14          | AGND  | Ground       | Pin 6   | Black      |  All Grounds must be connected
+| 9           | DGND  | Ground       | Pin 6   | Black      |  All Grounds must be connected
 
 ### SPI Connections
 
 | MCP3008 Pin | Signal | RPi GPIO | RPi Pin | SPI Role | Wire Color |
 | ----------- | ------ | -------- | ------- | -------- | ---------- |
 | 13          | CLK    | GPIO 11  | Pin 23  | SCLK     | Orange     |
-| 12          | DOUT   | GPIO 09  | Pin 21  | MISO     | Yellow     |
-| 11          | DIN    | GPIO 10  | Pin 19  | MOSI     | Blue       |
-| 10          | CS     | GPIO 08  | Pin 24  | CE0      | Grey       |
+| 12          | DOUT   | GPIO 09  | Pin 21  | MISO     | Blue       |
+| 11          | DIN    | GPIO 10  | Pin 19  | MOSI     | Green      |
+| 10          | CS     | GPIO 08  | Pin 24  | CE0      | Purple     |
 
 ### Best Practices
 
@@ -39,9 +40,30 @@ The MCP3008 is a 10-bit ADC with 8 channels, communicating via SPI. It converts 
 - Unused channels should be grounded to avoid floating inputs.
 - SPI speed should be ≤1 MHz. This setup uses 500 kHz.
 
+### SPI 5V to 3.3V Conversion via Logic Level Converter
+Logic level converter is placed between incoming lines from a higher voltage to our lower voltage logic processor.  Regards to this project, the SPI lines and the clock signal on the Raspberry Pi side need to be down converted to keep from damaging the Pi.
+
+TXS0108 Power Connections
+
+| TXS0108 Pin | Label | Connected To | RPi Pin | Wire Color | NOTES:                           |
+| ----------- | ----- | ------------ | ------- | ---------- | -------------------------------- |
+| 01          | VccA  | 3.3V         | Pin 1   | Red        |  1.4-3.6V Supply Voltage    LOW  |
+| 10          | OE    | 5.0V         | Pin 1   | Red        |  1.4-3.6V Supply Voltage    LOW  |
+| 20          | VBD   | 3.3V         | Pin 6   | Black      |  1.65-5.5V Supply Voltage   HIGH |
+| GND         | GND   | Ground       | Pin 6   | Black      |  All Grounds must be connected   |
+
+
+
+| MCP3008 Pin | Signal | TXS0108 HSide | LSide | RPi GPIO | RPi Pin | SPI Role | Wire Color |
+| ----------- | ------ | ------------- | ----- | -------- | ------- | -------- | ---------- |
+| 13          | CLK    | B1            | A1    | GPIO 11  | Pin 23  | SCLK     | Orange     |
+| 12          | DOUT   | B2            | A2    | GPIO 09  | Pin 21  | MISO     | Blue       | 
+| 11          | DIN    | B3            | A3    | GPIO 10  | Pin 19  | MOSI     | Green      |
+| 10          | CS     | B4            | A4    | GPIO 08  | Pin 24  | CE0      | Purple     |
+
 ## Sensor Use Example(s)
 
-The MQ-135 sensor outputs an analog signal on its A0 pin. This is connected to CH0 of the MCP3008. The Python script reads these value records and converts them to a digital value, and then calculates the estimated gas concentration in PPM based on the formula used for sensor accuracy, based on the VREF used.
+The MQ-135 sensor outputs an analog signal on its A0 pin. This is connected to CH0 of the MCP3008. Then connected to the high side of the Logic Level converter,  the corresponding Low Side is connected to the RPI. Then, the Python script reads these value records and converts them to a digital value, and then calculates the estimated gas concentration in PPM based on the formula used for sensor accuracy, based on the VREF used.
 
 FORMULA FOR SENSOR ACCURACY EXPLANATION.  THE FORMULA WITH ADJUSTMENTS FROM THE TEMP AND HUMIDITY IS CALCULATED WITHIN THE CODE.
 
@@ -52,13 +74,14 @@ Other sensors (e.g., MQ-7 for CO detection) follow the same pin layout and wirin
 A BME280 or BMP280 sensor can be connected via I²C to monitor temperature, humidity, and pressure.
 
 ### I²C Wiring
+This sensor is a 3.3V a sensor, conversion is not required.
 
 | BME/BMP280 Pin | Signal | RPi Pin | I²C Role  | Wire Color |
 | -------------- | ------ | ------- | --------- | ---------- |
 | VIN            | Power  | Pin 1   |           | Red        |
 | GND            | Ground | Pin 6   |           | Black      |
 | SCL            | Clock  | Pin 5   | SCL1      | Purple     |
-| SDA            | Data   | Pin 3   | SDA1      | Grey       |
+| SDA            | Data   | Pin 3   | SDA1      | Green      |
 
 The sensor is automatically detected via the I²C bus using a Python script and logs reading alongside the analog data.
 
@@ -76,183 +99,18 @@ The sensor is automatically detected via the I²C bus using a Python script and 
 
 ---
 
-## Installation Steps
-
-1. **Open terminal on your Raspberry Pi Zero 2W**
-
-2. **Clone the repository:**
-
-```sh
-cd ~
-git clone https://github.com/OsirianOne71/MQ-Sensors.git
-cd MQ-Sensors
-```
-
-3. **(Optional) Create a Python virtual environment:**
-
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-4. **Install Python dependencies:**
-
-```sh
-sudo pip install spidev matplotlib pandas smbus2 adafruit-circuitpython-bme280 
-```
-
-5. **Enable SPI and I2C interfaces:**
-
-```sh
-sudo raspi-config
-```
-
-Navigate to *Interface Options* > *Enable SPI*, *Enable I2C*, and *Enable SSH*.
-
-6. **Warm-up time:** Wait \~2 minutes for sensors to stabilize.
-
-7. **(OPTIONAL) Manually Run logging script:**
-
-```sh
-python3 sensor_logger.py
-```
-
-8. **Configure plotting environment:**
-
-```sh
-python3 settings.py
-```
-
-9. **View real-time data (optional):**
-
-```sh
-python3 dashboard.py
-```
-
----
-
-## Setup as a systemd Service
-
-1. **Make scripts executable:**
-
-```sh
-chmod +x ~/weather_sensor/weather_logging.py
-chmod +x ~/weather_sensor/rotate_csv.py
-chmod +x ~/weather_sensor/settings.py
-chmod +x ~/weather_sensor/dashboard.py
-```
-
-2. **Copy Service Files into Systemd:**
-
-```sh
-sudo cp rotate_csv.service /etc/systemd/system/
-sudo cp rotate_csv.timer /etc/systemd/system/
-sudo cp sensor_logger.service /etc/systemd/system
-```
-
-3. **Enable and start service:**
-
-```sh
-sudo systemctl daemon-reload
-
-sudo systemctl enable rotate_csv.timer
-sudo systemctl start rotate_csv.timer
-sudo systemctl enable sensor_logger.service
-sudo systemctl start sensor_logger.service
-```
-
----
-
-## Remote Log Access via SSHFS
-
-### On Raspberry Pi:
-
-1. Enable SSH:
-
-```sh
-sudo raspi-config
-```
-
-2. Find IP address:
-
-```sh
-hostname -I
-```
-
-### On Remote Linux/macOS Machine:
-
-1. Install SSHFS:
-
-```sh
-sudo apt install sshfs  # Linux
-brew install sshfs      # macOS
-```
-
-2. Mount Pi log directory:
-
-```sh
-mkdir -p ~/pi_logs
-sshfs pi@<PI_IP>:/var/logs/ /var/logs/
-```
-
-3. Access log at 
-   - `/var/logs/sensor_logger.service`
-   - `/var/logs/rotate_csv.service`
-
-4. Unmount:
-
-```sh
-fusermount -u /var/log/air-quality  # Linux
-umount /var/log/air-quality         # macOS
-```
-
-### On Windows:
-
-Use [WinFsp + SSHFS-Win](https://github.com/billziss-gh/sshfs-win) or [Dokan SSHFS](https://github.com/dokan-dev/dokany).
-
-## Remote Plotting
-
-1. Clone or copy:
-   - `dashboard.py`, `settings.py`, `configuration.json`
-2. Configure:
-
-```sh
-python3 settings.py
-```
-
-3. Run:
-
-```sh
-python3 dashboard.py
-```
-
----
-
-## Troubleshooting
-
-**No Output or Incorrect Readings:**
-
-- Check wiring and SPI pin setup
-- Ensure SPI mode is set to 0 (CPOL=0, CPHA=0)
-- Ensure the CS pin is toggled correctly in code
-
-**Floating or Noisy Readings:**
-
-- Ground all unused channels
-- Use shielding and proper layout practices
-
-**Low Accuracy:**
-
-- Ensure stable VREF and signal within range
-- Use optional decoupling capacitors
-
 ## Reference Links
 
 - [MCP3008 Overview](https://www.allelcoelec.com/blog/A-Complete-Overview-of-the-MCP3008-ADC.html)
-- [MQ-135 Sensor](https://www.elprocus.com/mq135-air-quality-sensor/)
-- [MQ-7 Datasheet](https://cdn.sparkfun.com/assets/b/b/b/3/4/MQ-7.pdf)
-- [BME280 Python Guide](https://learn.adafruit.com/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout/python-circuitpython)
+- [TXS0108 OverView](https://components101.com/modules/txs0108e-bi-directional-logic-level-converter-module)
 - [Raspberry Pi GPIO Pinout](https://pinout.xyz/)
+
+- [MQ-7 Datasheet](https://cdn.sparkfun.com/assets/b/b/b/3/4/MQ-7.pdf)
+- [MQ-135 Sensor](https://www.elprocus.com/mq135-air-quality-sensor/)
+   ...
+
+- [BME280 Python Guide](https://learn.adafruit.com/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout/python-circuitpython)
+
 
 ---
 
